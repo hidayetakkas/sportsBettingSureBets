@@ -49,43 +49,6 @@ def return_surebet_vals(odds_A, odds_B,stake):
     return [sureStakeA, sureStakeB]
 
 
-def obtener(url):
-
-    #page = requests.get(url, headers=headers).text
-    #soup = BeautifulSoup(page, 'html.parser')
-
-    req = requests.get(url)
-    soup = BeautifulSoup(req.content, 'html.parser');
-    lista=[]
-    
-    #resulta = soup.find_all(); #re.compile('^bloclive')); #, {'class': 'puce_texte'})
-
-    resulta = soup.findAll('div', attrs = {'class':'uk-flex'}) 
-
-    print('   ****************************    length of soup results = ' + str(len(resulta)) + '  *************************  and abot to print each item in the results object... : ')
-
-    print(soup.prettify())
-    #for item in resulta:
-        #text = item.text
-        #print(str(text))
-        
-        #text=str(text).replace("Ã³","o")
-        # text=str(text).replace("Ã­","i")
-        # text=str(text).replace("Ã±","n")
-        # text=str(text).replace("í","i")
-        # text=str(text).replace("Â°","°")
-        # text=str(text).replace("Ã©","e")    
-        # text=str(text).replace("Ã¡","a")
-        # text=str(text).replace("\' ","' ")
-        # text=str(text).replace("<br/>","")
-        # text=str(text).replace("\n","")
-        # text=str(text).replace("Operativo","Operativo : si")
-        # text=str(text).replace("Parque eolico onshore","Parque eolico onshore : si")
-        # text=str(text).replace("Imágenes de Google Maps","Imágenes de Google Maps : si")
-        
-        #lista.append(text)
-    return lista
-
 DRIVER_PATH = r'C:\Users\MaaD\Downloads\chromedriver' #the path where you have "chromedriver" file.
 #driver = webdriver.Chrome(executable_path=DRIVER_PATH)
 #driver.get('https://google.com')
@@ -95,29 +58,52 @@ options.headless = True
 options.add_argument("--window-size=1920,1200")
 
 driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
-driver.get("https://france-pari.fr/")
+#driver.get("https://france-pari.fr/")
 
-#url = "https://france-pari.fr/"
-#obtener(url)
-#print(driver.page_source) "):  #
 
-soccerButton_out = driver.find_elements_by_xpath("/html/body/div[@id='main']/section[@id='colonne_gauche']/div[3]/div[@class='bloc-inside-small']/div[@class='uk-sticky-placeholder']/nav[@role='navigation']/ul/li")
+#list of website links (most general for football mathces)
+france_pari_champions_league_link = "https://www.france-pari.fr/competition/6674-parier-sur-ligue-des-champions"
+unibet_champions_league_link      = "https://www.unibet.fr/sport/football/ligue-des-champions/ligue-des-champions-matchs"
+zebet_champions_league_link       = "https://www.zebet.fr/fr/competition/6674-ligue_des_champions"
+vbet_champions_league_link        = "https://www.vbet.fr/paris-sportifs?btag=147238_l56803&AFFAGG=#/Soccer/Europe/566/17145852"
 
-if soccerButton_out:
-    print("At last one such element exists ! and its length =  " + str(len(soccerButton_out))  + " :) ...")
+websites = [france_pari_champions_league_link, unibet_champions_league_link, zebet_champions_league_link, vbet_champions_league_link]
+
+reference_champ_league_games_url = str(websites[0])
+
+driver.get(reference_champ_league_games_url)
+
+refernce_champ_league_gamesDict = {}
+
+
+# now navigate using the driver and xpathFind to get to the matches section of Ref. site :
+champ_league_games_pariFrance_list = driver.find_elements_by_xpath("/html/body/div[@id='main']/section[@id='colonne_centre']/div[@class='nb-middle-content']/div/div[@class='bloc-inside-small']/div[@id='nb-sport-switcher']/div[@class='item-content uk-active']/div[@class='odd-event uk-flex']")
+
+if champ_league_games_pariFrance_list:
+    print("At last one such element exists ! and its length =  " + str(len(champ_league_games_pariFrance_list))  + " :) ...")
 
 else:
     print("NO SUch element exists ! :( ...")
 
+for games in champ_league_games_pariFrance_list:
 
-soccerButn = driver.find_element_by_tag_name("ahref")    
+    team_names_element = games.find_element_by_xpath('//div[@class="odd-event-block snc-odds-date-lib uk-flex"]/span[@class="bet-libEvent') #/a') #.get_attribute("href")
+    if team_names_element:
+        print('game href names element block exists ! :) ...')
+        team_names_string = team_names_element.get_attribute("href")
+    else:
+        print('NAAH --  game href names element block DOESN"t exist you fuckin wasp ! :( ... ')    
 
-#try:
-#    login_form = driver.find_elements_by_xpath("/html/body//div[@id='main']//div[@id='colonne_gauche']") #//div[@class='bloc-inside-small']//div[@class='uk-sticky-placeholder']/nav[@role='navigation']/ul[0]/li[0]//div[@class='nonsense']",)  #//a[@href]")  # [contains(@class,'tabId')]//a[@href]")
+    
+    odds_element = games.find_element_by_xpath('//div[@class="odd-event-block uk-flex"]/div[@class="odd-without-actor",@labelnum="1"]/a/span[@class="odd"]') 
+    if odds_element:
+        print('game ODDS element block exists ! :) ...')
+        odds_string = odds_element.text
 
-#except NoSuchElementException:
+    else:
+        print('NAAH --  game ODDS element block DOESN"t exist you fuckin wassy ! :( ... ')    
 
-#    print("Error caught in your find_elements_by_xpath() call -- NoSuchElementException ! :( ")
+
 
 print('all good the find_elements_by_xpath Call worked GRAND !! :) ')
 #login_form =  driver.find_element_by_id("PARIS SPORTIFS")
