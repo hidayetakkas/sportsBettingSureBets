@@ -7,6 +7,7 @@ import requests
 from selenium.common.exceptions import NoSuchElementException
 import smtplib
 from smtplib import SMTPException
+import timeit
 
 # define global init 'surebet' condition value (note by default any bet will not be a surebet given its > 1.0)
 surebet_factor = 1.1
@@ -72,6 +73,7 @@ def odds_alert_system(init_oddA,expect_oddB,teamA,teamB,date,competition):
     
     return True
 
+## TODO : must generalize this and add file to code bundle
 DRIVER_PATH = r'C:\Users\MaaD\Downloads\chromedriver' #the path where you have "chromedriver" file.
 #driver = webdriver.Chrome(executable_path=DRIVER_PATH)
 #driver.get('https://google.com')
@@ -81,15 +83,17 @@ options.headless = True
 options.add_argument("--window-size=1920,1200")
 
 driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
-#driver.get("https://france-pari.fr/")
+driver.get("https://france-pari.fr/")
 
 #list of website links (most general for football mathces-1st few are for champions league)
 france_pari_champions_league_link = "https://www.france-pari.fr/competition/6674-parier-sur-ligue-des-champions"
+vbet_champions_league_link        = "https://www.vbet.fr/paris-sportifs?btag=147238_l56803&AFFAGG=#/Soccer/Europe/566/17145852"
 unibet_champions_league_link      = "https://www.unibet.fr/sport/football/ligue-des-champions/ligue-des-champions-matchs"
 zebet_champions_league_link       = "https://www.zebet.fr/fr/competition/6674-ligue_des_champions"
-vbet_champions_league_link        = "https://www.vbet.fr/paris-sportifs?btag=147238_l56803&AFFAGG=#/Soccer/Europe/566/17145852"
 
-websites = [france_pari_champions_league_link, unibet_champions_league_link, zebet_champions_league_link, vbet_champions_league_link]
+
+websites = [france_pari_champions_league_link, vbet_champions_league_link, unibet_champions_league_link, zebet_champions_league_link]
+
 
 reference_champ_league_games_url = str(websites[0])
 driver.get(reference_champ_league_games_url)
@@ -100,6 +104,7 @@ refernce_champ_league_gamesDict = {}
 date = ''
 competition = 'champions_league'
 
+## TODO :
 # def try_catch_function():
 
 #     exceptionBool = False
@@ -108,21 +113,19 @@ competition = 'champions_league'
 #     return exceptionBool
 
 #if only soing 2 - way sure bet , then oddDraw can be set to -1 and used as such when read in here
-def send_mail_alert(teamA,teamB,oddsExpecTeamBwin,oddsTeamAWin,OddsDraw,bookiesNameA,bookiesNameEventB,bookiesNameEventA,bookiesNameEventDraw,competition):
+def send_mail_alert(init_oddA,expect_oddB,teamA,teamB,date,competition,bookiesNameEventB):
 
     successFlag = False
     sender = 'godlikester@gmail.com'
-    receivers = ['crowledj@tcd.ie']
+    receivers = ['pauldarmas@gmail.com']
 
     message = """From: From Person <from@fromdomain.com>
     To: To Person <to@todomain.com>
     Subject: SMTP e-mail test
 
     The is an Alert to tell you that the bookmaker - 
-    """ + str(bookiesNameEventB) + """ has its odd's on team B - """
-    + str(teamB) + """ to win the event against """ + str(teamA) + """
-    in the competition """ + str(competition) +
-    """ reach a value of """ + str(oddsExpecTeamBwin) +  """ at approx
+    """ + str(bookiesNameEventB) + """ has its odd's on team B - """ + str(teamB) + """ to win the event against """ + str(teamA) + """ \
+    in the competition """ + str(competition) + """ reach a value of """ + str(expect_oddB) +  """ at approxs
     hh:mm:ss o clock on zz day of MM / 20YY """
 
     try:
@@ -136,6 +139,20 @@ def send_mail_alert(teamA,teamB,oddsExpecTeamBwin,oddsTeamAWin,OddsDraw,bookiesN
         pass
 
     return successFlag
+
+#     ###########   TEST on unibet 
+
+# champ_league_games_UnibetTest_info = driver.find_elements_by_xpath('/html/body/div[@id="container"]/div[@id="wrapper"]/div[@id="content-container"]/div[@id="content"]/section/div[@id="main"] \
+# /section[@id="view-main-container"]/div[@id="view-main"]/section[@id="page__competitionview"]/div[@class="view view-eventpath"]/div[@class="page-wrap"] \
+# /div[@class="scroller"]/div[@class="ui-splitview"]/div[@class="ui-splitview-item ui-splitview-left"]/div[@class="i-splitview-item-inner"]/div[@class="c-eventpathlist bettingbox"]/div[@class="ui-mainview-block eventpath-wrapper"]') 
+
+# if champ_league_games_UnibetTest_info:
+#     print('gUnibetTest_inf element block exists ! :) ...')
+    
+# else:
+#     print('NAAH -- UnibetTest_info element block DOESN"t exist you fuckin wasp ! :( ... ')    
+
+  ###########   END  TEST on unibet 
 
 
 # now navigate using the driver and xpathFind to get to the matches section of Ref. site :
@@ -251,6 +268,8 @@ print('all good the find_elements_by_xpath Call worked GRAND !! :) --- full cham
 print(refernce_champ_league_gamesDict)
 #login_form =  driver.find_element_by_id("PARIS SPORTIFS")
 
+#send Alert to paul's mail:
+send_mail_alert(2.5,3.25,'Liverpool','Barcelona','01/04/2021','Champions League','Unibet')
 
 # TODO :rename like actual sites 
 site2s_champ_league_gamse = {}
@@ -258,17 +277,70 @@ site3s_champ_league_gamse = {}
 site4s_champ_league_gamse = {}
 
 # #Next loop thru all other SITE's champ league games besides  france-pari site as its the reference to compare to...
-# for sites in websites[1:]:
+for sites in websites[1:]:
 
-#     driver.get(sites)
+    driver.get(sites)
+
+#     ## *********** NB********************  -- My vbet equiv. to pari champs league scraping attempt (not going so well):
+#     driver.find_elements_by_xpath('html/body/div[@class="main-container"]/div[@class="main-body"]/div[@class="main-layout"]/div[@class="header-and-main-rows "]/main  main-rows"]/div[@class="uc-row-wrapper"]/ \
+#     div[@class="uc-row backgroundCover sportsbook-row"]/div[@class="row-container "]/div[@class="row mainRow "]/div[@class="column207"]/div[@class="column-container  vertical-top"]  \
+#     /div[@class="module-container...only-mobile...align-center ModuleSbEventsList↵.............................first...last............................."] /div[@class="...module ModuleSbEventsList "] \
+#     /div/div[@class="ember45"]/div[@class="events-list-container "]/div[@class="events-list-block Soccer "]/div[@class="sb-accordion-container"]/div[@class="ember579"]/div[@class="sb-accordion-content  events-list-accordion"] \
+#     /div[@class="eventListBody"]/div[@class="event-block layout2 "]')
+
+#    v = -1
+
+    if sites.startswith('unibet',12) or sites.startswith('unibet',11) :
+    # unibet tree struct to games elements:
+
+    # ['/html/body/div[@ "container"]/div[@  wrapper]/div[@ "content-container", "div#content", "section", "div#main", "section#view-main-container", "div#view-main", \
+    #  "section#page__competitionview", "div.view.view-eventpath", "div.page-wrap", "div.scroller", "div.ui-splitview", "div.ui-splitview-item.ui-splitview-left", \
+    # "div.i-splitview-item-inner", "div.c-eventpathlist.bettingbox", "div.ui-mainview-block.eventpath-wrapper", "div.bettingbox-item.box",  \
+    # "div.bettingbox-content.oddsbox-hide-marketname.bettingbox-wide", "div.ui-touchlink.had-market.inline-market.calendar-event.cell"]
     
-#     # now navigate using the driver and xpathFind to get to the matches section of Ref. site :
-#     try:
-#         champ_league_games_pariFrance_list = driver.find_elements_by_xpath("/html/body/div[@id='main']/section[@id='colonne_centre']/div[@class='nb-middle-content']/div/div[@class='bloc-inside-small']/div[@id='nb-sport-switcher']/div[@class='item-content uk-active']/div[@class='odd-event uk-flex']")
-#     except err as NoSuchElementException:
+    #     # now navigate using the driver and xpathFind to get to the matches section of Ref. site :
+        try:
+            #start = timeit.timeit()
+            champ_league_games_nested_gamesinfo_unibet = driver.find_elements_by_xpath('/html/body/div[@id="container"]/div[@id="wrapper"]/div[@id="content-container"]/div[@id="content"]/section/div[@id="main"] \
+    /section[@id="view-main-container"]/div[@id="view-main"]/section[@id="page__competitionview"]/div[@class="view view-eventpath"]/div[@class="page-wrap"] \
+    /div[@class="scroller"]/div[@class="ui-splitview"]/div[@class="ui-splitview-item ui-splitview-left"]/div[@class="i-splitview-item-inner"]/div[@class="c-eventpathlist bettingbox"]/div[@class="ui-mainview-block eventpath-wrapper"]') 
+            #end = timeit.timeit()
+            #print('Time taken to scrape unibets champ league shit was = ' + str(end - start)) 
 
-#         print("Error  ->" + str(err) + "caught in your find_elements_by_xpath() call -- NoSuchElementException ! :( ")
-#         continue
+        except err as NoSuchElementException:
+
+            print("Error  ->" + str(err) + "caught in your find_elements_by_xpath() call -- NoSuchElementException ! :( ")
+            continue
+
+        debug_check = 1;     
+
+    if sites.startswith('zebet',12) or sites.startswith('zebet',11) :
+    # unibet tree struct to games elements:
+
+        try:
+            champ_league_games_nested_gamesinfo_zebet = driver.find_elements_by_xpath('/html/body/div[@class="global"]/div[@class="content"]/div[@class="main uk-flex-item-1 uk-width-7-12"]/section/ \
+            div[@class="uk-block-20-20 uk-block-small-10-10"]/div[[@class="event"]/div[@class="article item"]/div[@class="uk-accordion uk-accordion-block item"]/ \
+            div[@class="uk-accordion-wrapper item-bloc item"]/div/div[@class="uk-accordion-content uk-padding-remove uk-active"]')
+                #     # now navigate using the driver and xpathFind to get to the matches section of Ref. site :
+            end = timeit.time
+            print('Time taken to scrape unibets champ league shit was = ' + str(end - start)) 
+
+        except NoSuchElementException:
+
+            print("Error  ->" + str(err) + "caught in your find_elements_by_xpath() call -- NoSuchElementException ! :( ")
+            continue
+
+      
+    
+    # if champ_league_games_nested_gamesinfo_unibet:
+    #     print('zebet games list element block EXISTS you fuckin wasp ! :( ... ')  
+
+    # else:
+    #     print('NAAH --  zebet games list element block DOESN"t exist you fuckin wasp ! :( ... ')    
+
+    debug_check = -1;  
+
+
 
 #     if champ_league_games_pariFrance_list:
 #         print("At last one such element exists ! and its length =  " + str(len(champ_league_games_pariFrance_list))  + " :) ...")
